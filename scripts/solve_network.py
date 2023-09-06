@@ -568,6 +568,7 @@ def add_pipe_retrofit_constraint(n):
 
     n.model.add_constraints(lhs == rhs, name="Link-pipe_retrofit")
 
+
 def add_battery_constraints(n):
     """
     Add constraint ensuring that charger = discharger, i.e.
@@ -647,7 +648,7 @@ def add_chp_constraints(n):
 
 def add_pipe_retrofit_constraint(n):
     """
-    Add constraint for retrofitting existing CH4 pipelines to H2 pipelines.if
+    Add constraint for retrofitting existing CH4 pipelines to H2 pipelines.if.
     """
     gas_pipes_i = n.links.query("carrier == 'gas pipeline' and p_nom_extendable").index
     h2_retrofitted_i = n.links.query(
@@ -667,31 +668,41 @@ def add_pipe_retrofit_constraint(n):
 
 
 def add_v2g_constraint(n):
-    bev_charger = n.links[n.links.carrier.str.contains('BEV charger')].index
+    bev_charger = n.links[n.links.carrier.str.contains("BEV charger")].index
     lhs2 = n.model["Link-p_nom"].loc[bev_charger]
-    v2g = n.links[n.links.carrier.str.contains('V2G')].index
+    v2g = n.links[n.links.carrier.str.contains("V2G")].index
     lhs1 = n.model["Link-p_nom"].loc[v2g]
     lhs = lhs1 - lhs2
     rhs = 0
-    n.model.add_constraints(lhs==rhs, name="constraint_v2g")
+    n.model.add_constraints(lhs == rhs, name="constraint_v2g")
+
 
 def add_EV_storage_constraint(n):
-    bev_charger = n.links[n.links.carrier.str.contains('BEV charger')].index
-    lhs1 = n.model["Link-p_nom"].loc[bev_charger]/n.config['sector']['bev_charge_rate']
-    ev_store = n.stores[n.stores.carrier.str.contains('EV battery storage')].index
-    lhs2 = n.model.variables['Store-e_nom'].loc[ev_store]/n.config['sector']['bev_energy']
-    lhs = lhs1-lhs2
+    bev_charger = n.links[n.links.carrier.str.contains("BEV charger")].index
+    lhs1 = (
+        n.model["Link-p_nom"].loc[bev_charger] / n.config["sector"]["bev_charge_rate"]
+    )
+    ev_store = n.stores[n.stores.carrier.str.contains("EV battery storage")].index
+    lhs2 = (
+        n.model.variables["Store-e_nom"].loc[ev_store]
+        / n.config["sector"]["bev_energy"]
+    )
+    lhs = lhs1 - lhs2
     rhs = 0
-    n.model.add_constraints(lhs==rhs, name="constraint_EV_storage")
+    n.model.add_constraints(lhs == rhs, name="constraint_EV_storage")
+
 
 def add_EV_number_constraint(n):
-    bev_charger = n.links[n.links.carrier.str.contains('BEV charger')].index
-    lhs1 = n.model["Link-p_nom"].loc[bev_charger]/n.config['sector']['bev_charge_rate']
-    ev = n.links[n.links.carrier.str.contains('land transport EV')].index
-    lhs2 = n.model["Link-p_nom"].loc[ev]/n.config['sector']['EV_consumption_1car']
-    lhs = lhs1-lhs2
+    bev_charger = n.links[n.links.carrier.str.contains("BEV charger")].index
+    lhs1 = (
+        n.model["Link-p_nom"].loc[bev_charger] / n.config["sector"]["bev_charge_rate"]
+    )
+    ev = n.links[n.links.carrier.str.contains("land transport EV")].index
+    lhs2 = n.model["Link-p_nom"].loc[ev] / n.config["sector"]["EV_consumption_1car"]
+    lhs = lhs1 - lhs2
     rhs = 0
-    n.model.add_constraints(lhs==rhs, name="constraint_EV_number")
+    n.model.add_constraints(lhs == rhs, name="constraint_EV_number")
+
 
 def extra_functionality(n, snapshots):
     """
@@ -719,12 +730,12 @@ def extra_functionality(n, snapshots):
     add_battery_constraints(n)
     add_pipe_retrofit_constraint(n)
     current_horizon = int(snakemake.wildcards.planning_horizons)
-    if config['sector']["land_transport_electric_share"][current_horizon] is None:
+    if config["sector"]["land_transport_electric_share"][current_horizon] is None:
         add_EV_number_constraint(n)
-        if config['sector']["bev_dsm"]:
-          add_EV_storage_constraint(n)
-        if config['sector']["v2g"]:
-          add_v2g_constraint(n)
+        if config["sector"]["bev_dsm"]:
+            add_EV_storage_constraint(n)
+        if config["sector"]["v2g"]:
+            add_v2g_constraint(n)
 
 
 def solve_network(n, config, solving, opts="", **kwargs):
