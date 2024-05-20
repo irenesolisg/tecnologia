@@ -100,6 +100,8 @@ Upcoming Release
 
 * Include gas and oil fields and saline aquifers in estimation of CO2 sequestration potential.
 
+* The building stock data was updated to 2023 version in :mod:`build_retro_cost`
+
 * bugfix: convert Strings to pathlib.Path objects as input to ConfigSettings
 
 * bugfix: fix distinction of temperature-dependent correction factors for the
