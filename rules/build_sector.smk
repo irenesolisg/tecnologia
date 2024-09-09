@@ -1028,6 +1028,13 @@ rule prepare_sector_network:
         RDIR=RDIR,
         heat_pump_sources=config_provider("sector", "heat_pump_sources"),
         heat_systems=config_provider("sector", "heat_systems"),
+        autarky = config_provider("enable", "retrieve_autarky_potentials"),
+        validation = config_provider("validation"),
+        apply_ctax = config_provider('sector','apply_ctax'),
+        ctax_2025=config_provider('sector', 'value_2025'),
+        ctax_rate=config_provider('sector', 'increase_rate'),
+        load_projections = config_provider('enable', 'load_projections'),
+        fidelio_power_shocks = config_provider('enable', 'fidelio_power_shocks'),
     input:
         unpack(input_profile_offwind),
         **rules.cluster_gas_network.output,
@@ -1142,4 +1149,6 @@ rule prepare_sector_network:
     conda:
         "../envs/environment.yaml"
     script:
-        "../scripts/prepare_sector_network.py"
+        "../scripts/ff55_prepare_sector_network.py" if config['run']['name'] == 'ff55' else "../scripts/prepare_sector_network.py"
+
+

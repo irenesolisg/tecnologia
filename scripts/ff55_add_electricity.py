@@ -198,7 +198,10 @@ def add_co2_emissions(n, costs, carriers):
     Add CO2 emissions to the network's carriers attribute.
     """
     suptechs = n.carriers.loc[carriers].index.str.split("-").str[0]
-    n.carriers.loc[carriers, "co2_emissions"] = costs.co2_emissions[suptechs].values
+    n.carriers.loc[carriers, "co2_ets"] = costs.co2_emissions[suptechs].values
+    n.carriers.loc[carriers, "co2_ets2"] = costs.co2_emissions[suptechs].values
+    n.carriers.loc[carriers, "co2_nonets"] = costs.co2_emissions[suptechs].values
+
 
 def load_costs(tech_costs, config, max_hours, Nyears=1.0):
     # set all asset costs and other parameters

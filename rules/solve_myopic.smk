@@ -48,7 +48,7 @@ rule add_existing_baseyear:
     conda:
         "../envs/environment.yaml"
     script:
-        "../scripts/add_existing_baseyear.py"
+        "../scripts/ff55_add_existing_baseyear.py" if config['run']['name'] == 'ff55' else "../scripts/add_existing_baseyear.py"
 
 
 def input_profile_tech_brownfield(w):
