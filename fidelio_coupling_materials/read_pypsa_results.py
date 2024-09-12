@@ -82,6 +82,7 @@ changes['Country'] = changes['Country'].str[:2].apply(get_country_name)
     
 changes.to_csv(f'./fidelio_coupling_materials/perc_changes_elec_prices.csv', index=False)
 
+
 # %% Retrieve share RES per year and scenario
 
 years = ['2030','2040', '2050'] #Need to add 2020
@@ -94,7 +95,7 @@ for scenario in scenarios:
         
         if i == '2020':
             
-            file_name = f"elec_s_37_lv1.5__Co2L1.0-24H-T-H-B-I-A-solar+p3-dist1_{i}"
+            file_name = f"elec_s_39_lvopt__Co2P-ff55_{i}"
             
         else:
 
@@ -275,12 +276,13 @@ for scenario in scenarios:
 # This will give you a duplicate error if you saved mistakenly a variable more times.
 # If output in 0 everything went smoothly
 # Convert nomenclature
+twh_to_ej = 3.6/1000
 database.loc[database['scenario'] == 'nopol', 'scenario'] = 'REF'
 database.loc[database['scenario'] == 'ctax', 'scenario'] = 'CTAX'
 database.loc[database['scenario'] == 'ff55', 'scenario'] = 'NZ'
-database.loc[database['unit'] == 'TWh/yr', 'unit'] = '%'
+database.loc[database['Unit'] == 'TWh/yr', 'value'] *= twh_to_ej
 
-twh_to_ej = 3.6/1000
+
 
 #df = df.convert_unit('TWh/yr',to='EJ/yr')
 
