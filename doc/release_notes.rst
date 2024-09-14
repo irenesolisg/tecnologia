@@ -68,6 +68,8 @@ Upcoming Release
     defaults to 10 km. Previously the distance to the region's centroid was
     used, which is not practical when the regions are already aggregated.
 
+* Add an experimental feature to aggregate components by build-year before optimisation, leading to a substantial reduction in memory footprint for myopic foresight optimisations. This aggregation can lead to minor changes in results, and the feature should be tested in the intended context before being used.
+
 PyPSA-Eur 0.13.0 (13th September 2024)
 ======================================
 
