@@ -433,16 +433,18 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
                     )
                 else:
                     if generator == "solid biomass":
-                        bus0=spatial.biomass.df.loc[new_capacity.index, "nodes"].values
+                        bus0 = spatial.biomass.df.loc[
+                            new_capacity.index, "nodes"
+                        ].values
                     elif generator == "biogas":
-                        bus0=spatial.biogas.df.loc[new_capacity.index, "nodes"].values
+                        bus0 = spatial.biogas.df.loc[new_capacity.index, "nodes"].values
                     else:
                         logger.error(f"Generator {generator} not recognized.")
 
                     # We assume the electrical efficiency of a CHP for the biomass and biogas power plants
                     # The EOP from technology data seems to be somewhat too efficient
 
-                    key = "central solid biomass CHP" 
+                    key = "central solid biomass CHP"
 
                     n.madd(
                         "Link",
@@ -474,7 +476,6 @@ def add_power_capacities_installed_before_baseyear(n, grouping_years, costs, bas
             n.generators.loc[existing_large, "p_nom_max"] = n.generators.loc[
                 existing_large, "p_nom_min"
             ]
-        
 
 
 def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
@@ -508,6 +509,10 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
     # assign clustered bus
     chp["bus"] = chp["bus"].astype(int)
     chp["cluster_bus"] = chp.bus.map(clustermaps)
+    if snakemake.params.add_district_heating_subnodes:
+        chp.loc[chp.subnode.notna(), "cluster_bus"] = chp.loc[
+            chp.subnode.notna(), "subnode"
+        ]
 
     chp["grouping_year"] = np.take(
         grouping_years, np.digitize(chp.DateIn, grouping_years, right=True)
@@ -608,13 +613,14 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
                     p_nom.index,
                     suffix=f" urban central {generator} CHP-{grouping_year}",
                     bus0=bus0,
-                    bus1=p_nom.index,
+                    bus1=p_nom.index.str.split().str[:2].str.join(" "),
                     bus2=p_nom.index + " urban central heat",
                     bus3="co2 atmosphere",
                     carrier=f"urban central {generator} CHP",
                     p_nom=p_nom,
                     capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
-                    overnight_cost=costs.at[key, "investment"] * costs.at[key, "efficiency"],
+                    overnight_cost=costs.at[key, "investment"]
+                    * costs.at[key, "efficiency"],
                     marginal_cost=costs.at[key, "VOM"],
                     efficiency=efficiency_power.dropna(),
                     efficiency2=efficiency_heat.dropna(),
@@ -628,13 +634,16 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
                     "Link",
                     p_nom.index,
                     suffix=f" urban {key}-{grouping_year}",
-                    bus0=spatial.biomass.df.loc[p_nom.index]["nodes"],
-                    bus1=p_nom.index,
+                    bus0=spatial.biomass.df.loc[
+                        p_nom.index.str.split().str[:2].str.join(" ")
+                    ]["nodes"].values,
+                    bus1=p_nom.index.str.split().str[:2].str.join(" "),
                     bus2=p_nom.index + " urban central heat",
                     carrier=generator,
                     p_nom=p_nom,
                     capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
-                    overnight_cost=costs.at[key, "investment"] * costs.at[key, "efficiency"],
+                    overnight_cost=costs.at[key, "investment"]
+                    * costs.at[key, "efficiency"],
                     marginal_cost=costs.at[key, "VOM"],
                     efficiency=efficiency_power,
                     efficiency2=efficiency_heat,
@@ -666,13 +675,14 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
                 p_nom.index,
                 suffix=f" urban central {generator} CHP-{grouping_year}",
                 bus0=bus0,
-                bus1=p_nom.index,
+                bus1=p_nom.index.str.split().str[:2].str.join(" "),
                 bus2=p_nom.index + " urban central heat",
                 bus3="co2 atmosphere",
                 carrier=f"urban central {generator} CHP",
                 p_nom=p_nom / costs.at[key, "efficiency"],
                 capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
-                overnight_cost=costs.at[key, "investment"] * costs.at[key, "efficiency"],
+                overnight_cost=costs.at[key, "investment"]
+                * costs.at[key, "efficiency"],
                 marginal_cost=costs.at[key, "VOM"],
                 efficiency=costs.at[key, "efficiency"],
                 efficiency2=costs.at[key, "efficiency"] / costs.at[key, "c_b"],
@@ -686,13 +696,16 @@ def add_chp_plants(n, grouping_years, costs, baseyear, clustermaps):
                 "Link",
                 p_nom.index,
                 suffix=f" urban {key}-{grouping_year}",
-                bus0=spatial.biomass.df.loc[p_nom.index]["nodes"],
-                bus1=p_nom.index,
+                bus0=spatial.biomass.df.loc[
+                    p_nom.index.str.split().str[:2].str.join(" ")
+                ]["nodes"].values,
+                bus1=p_nom.index.str.split().str[:2].str.join(" "),
                 bus2=p_nom.index + " urban central heat",
                 carrier=generator,
                 p_nom=p_nom / costs.at[key, "efficiency"],
                 capital_cost=costs.at[key, "fixed"] * costs.at[key, "efficiency"],
-                overnight_cost=costs.at[key, "investment"] * costs.at[key, "efficiency"],
+                overnight_cost=costs.at[key, "investment"]
+                * costs.at[key, "efficiency"],
                 marginal_cost=costs.at[key, "VOM"],
                 efficiency=costs.at[key, "efficiency"],
                 efficiency2=costs.at[key, "efficiency-heat"],
@@ -781,7 +794,8 @@ def add_heating_capacities_installed_before_baseyear(
                         name=nodes,
                     )
                     .to_pandas()
-                    .reindex(index=n.snapshots)
+                    .T.drop_duplicates()
+                    .T.reindex(index=n.snapshots)
                     if time_dep_hp_cop
                     else costs.at[costs_name, "efficiency"]
                 )
